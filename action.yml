@@ -153,15 +153,16 @@ runs:
             tflocal init
           fi
 
-          logger info "Applying Terraform..."
-
           # Apply Terraform - use Terraform backend config file if specified
+
+          logger info "Applying Terraform..."
 
           if [[ -n "${{ inputs.backend-config-file }}" ]]; then
             tflocal apply --auto-approve --backend-config="${{ inputs.backend-config-file }}"
           else
             tflocal apply --auto-approve
           fi
+
         fi
       shell: bash
       working-directory: ${{ inputs.working-directory }}
