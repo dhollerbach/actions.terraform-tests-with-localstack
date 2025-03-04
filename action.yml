@@ -179,9 +179,8 @@ inputs:
     required: false
 
   terraform-version:
-    default: 1.10.2
     description: The Terraform version to setup.
-    required: false
+    required: true
 
   terraform-wrapper:
     default: "false"
