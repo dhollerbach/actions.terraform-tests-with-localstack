@@ -143,16 +143,6 @@ runs:
 
         if [[ "${{ inputs.run-apply }}" == "true" ]]; then
 
-          # Initialize Terraform - use Terraform backend config file if specified
-
-          logger info "Initializing Terraform..."
-
-          if [[ -n "${{ inputs.backend-config-file }}" ]]; then
-            tflocal init --backend-config="${{ inputs.backend-config-file }}"
-          else
-            tflocal init
-          fi
-
           # Apply Terraform - use Terraform backend config file if specified
 
           logger info "Applying Terraform..."
