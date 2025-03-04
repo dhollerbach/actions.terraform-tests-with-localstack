@@ -35,7 +35,7 @@ runs:
       run: pip install terraform-local
       shell: bash
 
-    # Tests
+    # Unit Tests
     - name: Run Terraform Unit Tests
       run: |
         # Setup Logger
@@ -88,7 +88,6 @@ runs:
         # Run Validator
 
         if [[ "${{ inputs.run-validator }}" == "true" ]]; then
-          logger info "Initializing Terraform..."
 
           # Use GitHub personal access token if specified
 
@@ -97,6 +96,8 @@ runs:
           fi
 
           # Initialize Terraform - use Terraform backend config file if specified
+
+          logger info "Initializing Terraform..."
 
           if [[ -n "${{ inputs.backend-config-file }}" ]]; then
             tflocal init --backend-config="${{ inputs.backend-config-file }}"
@@ -109,10 +110,49 @@ runs:
           logger info "Validating Terraform..."
           tflocal validate
         fi
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+
+      # Integration Tests
+    - name: Run Terraform Integration Tests
+      run: |
+        # Setup Logger
+
+        YELLOW="\033[33m"
+        GREEN="\033[32m"
+        RED="\033[31m"
+        BLUE="\033[34m"
+        RESET="\033[0m"
+
+        logger() {
+          case "$1" in
+            info)    COLOR=$BLUE; ICON="ℹ️";;
+            success) COLOR=$GREEN; ICON="✅";;
+            warning) COLOR=$YELLOW; ICON="⚠️";;
+            error)   COLOR=$RED; ICON="❌";;
+            *)       COLOR=$RESET; ICON="";;
+          esac
+
+          shift  # Remove the first argument
+          echo -e "${COLOR}${ICON} $@${RESET}"
+        }
+
+        ### Run Terraform Integration Tests ###
 
         # Run Apply
 
         if [[ "${{ inputs.run-apply }}" == "true" ]]; then
+
+          # Initialize Terraform - use Terraform backend config file if specified
+
+          logger info "Initializing Terraform..."
+
+          if [[ -n "${{ inputs.backend-config-file }}" ]]; then
+            tflocal init --backend-config="${{ inputs.backend-config-file }}"
+          else
+            tflocal init
+          fi
+
           logger info "Applying Terraform..."
 
           # Apply Terraform - use Terraform backend config file if specified
