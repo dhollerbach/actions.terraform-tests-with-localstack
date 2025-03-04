@@ -17,7 +17,7 @@ GitHub action that runs Terraform tests using LocalStack.
 | `run-linter`            | **Optional** | Whether or not to run `tflint --recursive`. Default is `true`.                                                                                                 |
 | `run-security-scanner`  | **Optional** | Whether or not to run `tfsec`. Default is `true`.                                                                                                              |
 | `run-validator`         | **Optional** | Whether or not to run `terraform validate`. Default is `true`.                                                                                                 |
-| `terraform-version`     | **Optional** | The Terraform version to use.                                                                                                                                |
+| `terraform-version`     | **Required** | The Terraform version to use.                                                                                                                                |
 | `terraform-wrapper`     | **Optional** | Whether or not to enable to Terraform wrapper when setting up Terraform. Defaults to `false`.                                                                |
 | `working-directory`     | **Optional** | The working directory to run tests in. Default is the current directory.                                                                                     |
 
