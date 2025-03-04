@@ -22,19 +22,6 @@ runs:
         curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
       shell: bash
 
-    # LocalStack
-    - name: Setup LocalStack
-      uses: localstack/setup-localstack@main
-      with:
-        image-tag: "${{ inputs.localstack-image-tag }}"
-        use-pro: "${{ inputs.localstack-use-pro }}"
-      env:
-        LOCALSTACK_API_KEY: "${{ inputs.localstack-api-key }}"
-
-    - name: Install tflocal
-      run: pip install terraform-local
-      shell: bash
-
     # Unit Tests
     - name: Run Terraform Unit Tests
       run: |
@@ -100,18 +87,31 @@ runs:
           logger info "Initializing Terraform..."
 
           if [[ -n "${{ inputs.backend-config-file }}" ]]; then
-            tflocal init --backend-config="${{ inputs.backend-config-file }}"
+            terraform init --backend-config="${{ inputs.backend-config-file }}"
           else
-            tflocal init
+            terraform init
           fi
 
           # Validate Terraform
 
           logger info "Validating Terraform..."
-          tflocal validate
+          terraform validate
         fi
       shell: bash
       working-directory: ${{ inputs.working-directory }}
+
+    # LocalStack
+    - name: Setup LocalStack
+      uses: localstack/setup-localstack@main
+      with:
+        image-tag: "${{ inputs.localstack-image-tag }}"
+        use-pro: "${{ inputs.localstack-use-pro }}"
+      env:
+        LOCALSTACK_API_KEY: "${{ inputs.localstack-api-key }}"
+
+    - name: Install tflocal
+      run: pip install terraform-local
+      shell: bash
 
       # Integration Tests
     - name: Run Terraform Integration Tests
