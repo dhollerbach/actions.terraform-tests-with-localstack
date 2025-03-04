@@ -12,11 +12,11 @@ GitHub action that runs Terraform tests using LocalStack.
 | `localstack-image-tag`  | **Optional** | The LocalStack image tag to use when setting up LocalStack. Defaults to `latest`.                                                                            |
 | `localstack-use-pro`    | **Optional** | Whether or not to use LocalStack Pro. If using LocalStack Pro, set to `true` and set **localstack-api-key** to your LocalStack API key. Defaults to `false`. |
 | `personal-access-token` | **Optional** | The GitHub personal access token to use when running `terraform init`. Specify if any modules are stored in private GitHub repositories.                     |
-| `run-apply`             | **Optional** | Whether or not to run `terraform apply --auto-approve`. Default is true.                                                                                     |
-| `run-formatter`         | **Optional** | Whether or not to run `terraform fmt -recursive`. Default is true.                                                                                           |
-| `run-linter`            | **Optional** | Whether or not to run `tflint --recursive`. Default is true.                                                                                                 |
-| `run-security-scanner`  | **Optional** | Whether or not to run `tfsec`. Default is true.                                                                                                              |
-| `run-validator`         | **Optional** | Whether or not to run `terraform validate`. Default is true.                                                                                                 |
+| `run-apply`             | **Optional** | Whether or not to run `terraform apply --auto-approve`. Default is `true`.                                                                                     |
+| `run-formatter`         | **Optional** | Whether or not to run `terraform fmt -recursive`. Default is `true`.                                                                                           |
+| `run-linter`            | **Optional** | Whether or not to run `tflint --recursive`. Default is `true`.                                                                                                 |
+| `run-security-scanner`  | **Optional** | Whether or not to run `tfsec`. Default is `true`.                                                                                                              |
+| `run-validator`         | **Optional** | Whether or not to run `terraform validate`. Default is `true`.                                                                                                 |
 | `terraform-version`     | **Optional** | The Terraform version to use.                                                                                                                                |
 | `terraform-wrapper`     | **Optional** | Whether or not to enable to Terraform wrapper when setting up Terraform. Defaults to `false`.                                                                |
 | `working-directory`     | **Optional** | The working directory to run tests in. Default is the current directory.                                                                                     |
