@@ -1,4 +1,4 @@
-# Terraform Unit Tests
+# Terraform Tests With LocalStack
 
 GitHub action that runs Terraform tests using LocalStack.
 
