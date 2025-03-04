@@ -1,0 +1,189 @@
+name: Terraform Tests With LocalStack
+description: GitHub action that runs Terraform tests using LocalStack.
+
+runs:
+  using: composite
+
+  steps:
+    # Terraform
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@main
+      with:
+        terraform_version: "${{ inputs.terraform-version }}"
+        terraform_wrapper: "${{ inputs.terraform-wrapper }}"
+
+    - name: Install Terraform addons
+      run: |
+        curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+        curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+      shell: bash
+
+    # LocalStack
+    - name: Setup LocalStack
+      uses: localstack/setup-localstack@main
+      with:
+        image-tag: "${{ inputs.localstack-image-tag }}"
+        use-pro: "${{ inputs.localstack-use-pro }}"
+      env:
+        LOCALSTACK_API_KEY: "${{ inputs.localstack-api-key }}"
+
+    - name: Install tflocal
+      run: pip install terraform-local
+      shell: bash
+
+    # Tests
+    - name: Run Terraform Unit Tests
+      run: |
+        # Setup Logger
+
+        YELLOW="\033[33m"
+        GREEN="\033[32m"
+        RED="\033[31m"
+        BLUE="\033[34m"
+        RESET="\033[0m"
+
+        logger() {
+          case "$1" in
+            info)    COLOR=$BLUE; ICON="ℹ️";;
+            success) COLOR=$GREEN; ICON="✅";;
+            warning) COLOR=$YELLOW; ICON="⚠️";;
+            error)   COLOR=$RED; ICON="❌";;
+            *)       COLOR=$RESET; ICON="";;
+          esac
+
+          shift  # Remove the first argument
+          echo -e "${COLOR}${ICON} $@${RESET}"
+        }
+
+        ### Run Terraform Unit Tests ###
+
+        # Run Formatter
+
+        if [[ "${{ inputs.run-formatter }}" == "true" ]]; then
+          logger info "Running terraform fmt..."
+          terraform fmt -recursive
+          logger success "terraform fmt check passed!"
+        fi
+
+        # Run Linter
+
+        if [[ "${{ inputs.run-linter }}" == "true" ]]; then
+          logger info "Running tflint..."
+          tflint --recursive
+          logger success "tflint check passed!"
+        fi
+
+        # Run Security Scanner
+
+        if [[ "${{ inputs.run-security-scanner }}" == "true" ]]; then
+          logger info "Running tfsec..."
+          tfsec
+          logger success "tfsec check passed!"
+        fi
+
+        # Run Validator
+
+        if [[ "${{ inputs.run-validator }}" == "true" ]]; then
+          logger info "Initializing Terraform..."
+
+          # Use GitHub personal access token if specified
+
+          if [[ -n "${{ inputs.personal-access-token }}" ]]; then
+            git config --global url."https://${{ inputs.github-user }}:${{ inputs.personal-access-token }}@github.com".insteadOf https://github.com
+          fi
+
+          # Initialize Terraform - use Terraform backend config file if specified
+
+          if [[ -n "${{ inputs.backend-config-file }}" ]]; then
+            tflocal init --backend-config="${{ inputs.backend-config-file }}"
+          else
+            tflocal init
+          fi
+
+          # Validate Terraform
+
+          logger info "Validating Terraform..."
+          tflocal validate
+        fi
+
+        # Run Apply
+
+        if [[ "${{ inputs.run-apply }}" == "true" ]]; then
+          logger info "Applying Terraform..."
+
+          # Apply Terraform - use Terraform backend config file if specified
+
+          if [[ -n "${{ inputs.backend-config-file }}" ]]; then
+            tflocal apply --auto-approve --backend-config="${{ inputs.backend-config-file }}"
+          else
+            tflocal apply --auto-approve
+          fi
+        fi
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+
+inputs:
+  backend-config-file:
+    description: The backend config file to use when running `terraform init`.
+    required: false
+
+  github-user:
+    default: "github-user"
+    description: The GitHub user to associate with the personal access token. GitHub does not actually use this user so any value will work. Default is `github-user`.
+    required: false
+
+  localstack-api-key:
+    description: The LocalStack API key to use when setting up LocalStack. Required if using LocalStack Pro.
+    required: false
+  
+  localstack-image-tag:
+    default: "latest"
+    description: The LocalStack image tag to use when setting up LocalStack. Defaults to `latest`.
+    required: false
+
+  localstack-use-pro:
+    default: "false"
+    description: Whether or not to use LocalStack Pro. Defaults to `false`.
+    required: false
+
+  personal-access-token:
+    description: The GitHub personal access token to use when running `terraform init`. Specify if any modules are stored in private repositories.
+    required: false
+
+  run-apply:
+    default: "true"
+    description: Whether or not to run `terraform apply --auto-approve`. Default is `true`.
+
+  run-formatter:
+    default: "true"
+    description: Whether or not to run `terraform fmt -recursive`. Default is `true`.
+    required: false
+
+  run-linter:
+    default: "true"
+    description: Whether or not to run `tflint --recursive`. Default is `true`.
+    required: false
+
+  run-security-scanner:
+    default: "true"
+    description: Whether or not to run `tfsec`. Default is `true`.
+    required: false
+
+  run-validator:
+    default: "true"
+    description: Whether or not to run `terraform validate`. Default is `true`.
+    required: false
+
+  terraform-version:
+    description: The Terraform version to setup.
+    required: true
+
+  terraform-wrapper:
+    default: "false"
+    description: Whether or not to enable to Terraform wrapper when setting up Terraform. Defaults to `false`.
+    required: false
+
+  working-directory:
+    default: "."
+    description: The working directory to run tests in. Default is the current directory.
+    required: false
