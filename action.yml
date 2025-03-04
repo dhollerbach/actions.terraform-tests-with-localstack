@@ -1,6 +1,10 @@
 name: Terraform Tests With LocalStack
 description: GitHub action that runs Terraform tests using LocalStack.
 
+branding:
+  icon: check
+  color: green
+
 runs:
   using: composite
 
@@ -175,8 +179,9 @@ inputs:
     required: false
 
   terraform-version:
-    description: The Terraform version to use.
-    required: true
+    default: 1.10.2
+    description: The Terraform version to setup.
+    required: false
 
   terraform-wrapper:
     default: "false"
