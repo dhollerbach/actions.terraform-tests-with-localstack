@@ -9,31 +9,15 @@ runs:
   using: composite
 
   steps:
-    # Terraform
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@main
-      with:
-        terraform_version: "${{ inputs.terraform-version }}"
-        terraform_wrapper: "${{ inputs.terraform-wrapper }}"
-
-    - name: Install Terraform addons
+    - name: Setup Logger
       run: |
-        curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
-        curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
-      shell: bash
-
-    # Unit Tests
-    - name: Run Terraform Unit Tests
-      run: |
-        # Setup Logger
-
         YELLOW="\033[33m"
         GREEN="\033[32m"
         RED="\033[31m"
         BLUE="\033[34m"
         RESET="\033[0m"
 
-        logger() {
+        echo 'logger() {
           case "$1" in
             info)    COLOR=$BLUE; ICON="ℹ️";;
             success) COLOR=$GREEN; ICON="✅";;
@@ -44,64 +28,81 @@ runs:
 
           shift  # Remove the first argument
           echo -e "${COLOR}${ICON} $@${RESET}"
-        }
+        }' >> "$BASH_ENV"
+      shell: bash
 
-        ### Run Terraform Unit Tests ###
+    # Terraform
+    - name: Setup Terraform
+      if: ${{ inputs.terraform-version }}
+      uses: hashicorp/setup-terraform@main
+      with:
+        terraform_version: "${{ inputs.terraform-version }}"
+        terraform_wrapper: "${{ inputs.terraform-wrapper }}"
 
-        # Run Formatter
+    - name: Install Linter addon
+      if: ${{ inputs.run-linter == "true" }}
+      run: curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+      shell: bash
 
-        if [[ "${{ inputs.run-formatter }}" == "true" ]]; then
-          logger info "Running terraform fmt..."
-          terraform fmt -recursive
-          logger success "terraform fmt check passed!"
-        fi
+    - name: Install Security Scanner addon
+      if: ${{ inputs.run-security-scanner == "true" }}
+      run: curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+      shell: bash
 
-        # Run Linter
+    # Unit Tests
+    - name: Run Formatter
+      if: ${{ inputs.run-formatter == "true" }}
+      run: |
+        logger info  "Running terraform fmt..."
+        terraform fmt -recursive
+        logger success "terraform fmt check passed!"
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
 
-        if [[ "${{ inputs.run-linter }}" == "true" ]]; then
-          logger info "Running tflint..."
-          tflint --recursive
-          logger success "tflint check passed!"
-        fi
+    - name: Run Linter
+      if: ${{ inputs.run-linter == "true" }}
+      run: |
+        logger info "Running tflint..."
+        tflint --recursive
+        logger success "tflint check passed!"
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
 
-        # Run Security Scanner
+    - name: Run Security Scanner
+      if: ${{ inputs.run-security-scanner == "true" }}
+      run: |
+        logger info "Running tfsec..."
+        tfsec
+        logger success "tfsec check passed!"
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
 
-        if [[ "${{ inputs.run-security-scanner }}" == "true" ]]; then
-          logger info "Running tfsec..."
-          tfsec
-          logger success "tfsec check passed!"
-        fi
+    - name: Use GitHub Personal Access Token
+      if: ${{ inputs.personal-access-token }}
+      run: |
+        logger info "Setting GitHub personal access token..."
+        git config --global url."https://${{ inputs.github-user }}:${{ inputs.personal-access-token }}@github.com".insteadOf https://github.com
+      shell: bash
 
-        # Run Validator
+    - name: Run Terraform Init
+      if: ${{ inputs.run-validator == "true" }}
+      run: |
+        logger info "Initializing Terraform..."
+        terraform init "${{ inputs.args }}"
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
 
-        if [[ "${{ inputs.run-validator }}" == "true" ]]; then
-
-          # Use GitHub personal access token if specified
-
-          if [[ -n "${{ inputs.personal-access-token }}" ]]; then
-            git config --global url."https://${{ inputs.github-user }}:${{ inputs.personal-access-token }}@github.com".insteadOf https://github.com
-          fi
-
-          # Initialize Terraform - use Terraform backend config file if specified
-
-          logger info "Initializing Terraform..."
-
-          if [[ -n "${{ inputs.backend-config-file }}" ]]; then
-            terraform init --backend-config="${{ inputs.backend-config-file }}"
-          else
-            terraform init
-          fi
-
-          # Validate Terraform
-
-          logger info "Validating Terraform..."
-          terraform validate
-        fi
+    - name: Run Terraform Validator
+      if: ${{ inputs.run-validator == "true" }}
+      run: |
+        logger info "Validating Terraform..."
+        terraform validate
       shell: bash
       working-directory: ${{ inputs.working-directory }}
 
     # LocalStack
     - name: Setup LocalStack
+      if: ${{ inputs.run-apply == "true" }}
       uses: localstack/setup-localstack@main
       with:
         image-tag: "${{ inputs.localstack-image-tag }}"
@@ -110,56 +111,22 @@ runs:
         LOCALSTACK_API_KEY: "${{ inputs.localstack-api-key }}"
 
     - name: Install tflocal
+      if: ${{ inputs.run-apply == "true" }}
       run: pip install terraform-local
       shell: bash
 
       # Integration Tests
     - name: Run Terraform Integration Tests
+      if: ${{ inputs.run-apply == "true" }}
       run: |
-        # Setup Logger
-
-        YELLOW="\033[33m"
-        GREEN="\033[32m"
-        RED="\033[31m"
-        BLUE="\033[34m"
-        RESET="\033[0m"
-
-        logger() {
-          case "$1" in
-            info)    COLOR=$BLUE; ICON="ℹ️";;
-            success) COLOR=$GREEN; ICON="✅";;
-            warning) COLOR=$YELLOW; ICON="⚠️";;
-            error)   COLOR=$RED; ICON="❌";;
-            *)       COLOR=$RESET; ICON="";;
-          esac
-
-          shift  # Remove the first argument
-          echo -e "${COLOR}${ICON} $@${RESET}"
-        }
-
-        ### Run Terraform Integration Tests ###
-
-        # Run Apply
-
-        if [[ "${{ inputs.run-apply }}" == "true" ]]; then
-
-          # Apply Terraform - use Terraform backend config file if specified
-
-          logger info "Applying Terraform..."
-
-          if [[ -n "${{ inputs.backend-config-file }}" ]]; then
-            tflocal apply --auto-approve --backend-config="${{ inputs.backend-config-file }}"
-          else
-            tflocal apply --auto-approve
-          fi
-
-        fi
+        logger info "Applying Terraform..."
+        tflocal apply --auto-approve "${{ inputs.args }}"
       shell: bash
       working-directory: ${{ inputs.working-directory }}
 
 inputs:
-  backend-config-file:
-    description: The backend config file to use when running `terraform init`.
+  args:
+    description: Arguments to use when running `terraform init` and `terraform apply`. E.g. "--backend-config=my-config-file.conf --var-file=dev.tfvars -var MY_VARIABLE=some_value"
     required: false
 
   github-user:
@@ -210,8 +177,8 @@ inputs:
     required: false
 
   terraform-version:
-    description: The Terraform version to setup.
-    required: true
+    description: The Terraform version to setup. Required if Terraform is not previously setup.
+    required: false
 
   terraform-wrapper:
     default: "false"
