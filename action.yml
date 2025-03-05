@@ -9,28 +9,6 @@ runs:
   using: composite
 
   steps:
-    - name: Setup Logger
-      run: |
-        YELLOW="\033[33m"
-        GREEN="\033[32m"
-        RED="\033[31m"
-        BLUE="\033[34m"
-        RESET="\033[0m"
-
-        echo -e 'logger() {
-          case "$1" in
-            info)    COLOR=$BLUE; ICON="ℹ️";;
-            success) COLOR=$GREEN; ICON="✅";;
-            warning) COLOR=$YELLOW; ICON="⚠️";;
-            error)   COLOR=$RED; ICON="❌";;
-            *)       COLOR=$RESET; ICON="";;
-          esac
-
-          shift  # Remove the first argument
-          echo -e "${COLOR}${ICON} $@${RESET}"
-        }' >> "$BASH_ENV"
-      shell: bash
-
     # Terraform
     - name: Setup Terraform
       if: ${{ inputs.terraform-version }}
@@ -53,41 +31,42 @@ runs:
     - name: Run Formatter
       if: ${{ inputs.run-formatter == 'true' }}
       run: |
-        logger info  "Running terraform fmt..."
+        echo -e "\e[1;34m Running terraform fmt... \e[0m"
         terraform fmt -recursive
-        logger success "terraform fmt check passed!"
+        echo -e "\e[1;33m terraform fmt check passed! \e[0m"
       shell: bash
       working-directory: ${{ inputs.working-directory }}
 
     - name: Run Linter
       if: ${{ inputs.run-linter == 'true' }}
       run: |
-        logger info "Running tflint..."
+        echo -e "\e[1;34m Running tflint... \e[0m"
         tflint --recursive
-        logger success "tflint check passed!"
+        echo -e "\e[1;33m tflint check passed! \e[0m"
       shell: bash
       working-directory: ${{ inputs.working-directory }}
 
     - name: Run Security Scanner
       if: ${{ inputs.run-security-scanner == 'true' }}
       run: |
-        logger info "Running tfsec..."
+        echo -e "\e[1;34m Running tfsec... \e[0m"
         tfsec
-        logger success "tfsec check passed!"
+        echo -e "\e[1;33m tfsec check passed! \e[0m"
       shell: bash
       working-directory: ${{ inputs.working-directory }}
 
     - name: Use GitHub Personal Access Token
       if: ${{ inputs.personal-access-token }}
       run: |
-        logger info "Setting GitHub personal access token..."
+        echo -e "\e[1;34m Setting GitHub personal access token... \e[0m"
         git config --global url."https://${{ inputs.github-user }}:${{ inputs.personal-access-token }}@github.com".insteadOf https://github.com
+        echo -e "\e[1;33m set Gitub personal access token! \e[0m"
       shell: bash
 
     - name: Run Terraform Init
       if: ${{ inputs.run-validator == 'true' }}
       run: |
-        logger info "Initializing Terraform..."
+        echo -e "\e[1;34m Initializing Terraform... \e[0m"
         terraform init "${{ inputs.args }}"
       shell: bash
       working-directory: ${{ inputs.working-directory }}
@@ -95,7 +74,7 @@ runs:
     - name: Run Terraform Validator
       if: ${{ inputs.run-validator == 'true' }}
       run: |
-        logger info "Validating Terraform..."
+        echo -e "\e[1;34m Validating Terraform... \e[0m"
         terraform validate
       shell: bash
       working-directory: ${{ inputs.working-directory }}
@@ -119,7 +98,7 @@ runs:
     - name: Run Terraform Integration Tests
       if: ${{ inputs.run-apply == 'true' }}
       run: |
-        logger info "Applying Terraform..."
+        echo -e "\e[1;34m Applying Terraform... \e[0m"
         tflocal apply --auto-approve "${{ inputs.args }}"
       shell: bash
       working-directory: ${{ inputs.working-directory }}
