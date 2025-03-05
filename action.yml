@@ -30,52 +30,47 @@ runs:
     # Unit Tests
     - name: Run Formatter
       if: ${{ inputs.run-formatter == 'true' }}
-      run: |
-        echo -e "\e[1;34m Running terraform fmt... \e[0m"
-        terraform fmt -recursive
-        echo -e "\e[1;32m terraform fmt check passed! \e[0m"
+      run: terraform fmt -recursive
       shell: bash
       working-directory: ${{ inputs.working-directory }}
 
     - name: Run Linter
       if: ${{ inputs.run-linter == 'true' }}
-      run: |
-        echo -e "\e[1;34m Running tflint... \e[0m"
-        tflint --recursive
-        echo -e "\e[1;32m tflint check passed! \e[0m"
+      run: tflint --recursive
       shell: bash
       working-directory: ${{ inputs.working-directory }}
 
     - name: Run Security Scanner
       if: ${{ inputs.run-security-scanner == 'true' }}
-      run: |
-        echo -e "\e[1;34m Running tfsec... \e[0m"
-        tfsec
-        echo -e "\e[1;32m tfsec check passed! \e[0m"
+      run: tfsec
       shell: bash
       working-directory: ${{ inputs.working-directory }}
 
     - name: Use GitHub Personal Access Token
       if: ${{ inputs.personal-access-token }}
+      run: git config --global url."https://${{ inputs.github-user }}:${{ inputs.personal-access-token }}@github.com".insteadOf https://github.com
+      shell: bash
+
+    - name: Set Args
+      if: ${{ inputs.args }}
+      id: args
       run: |
-        echo -e "\e[1;34m Setting GitHub personal access token... \e[0m"
-        git config --global url."https://${{ inputs.github-user }}:${{ inputs.personal-access-token }}@github.com".insteadOf https://github.com
-        echo -e "\e[1;32m set Gitub personal access token! \e[0m"
+        if [[ -n "${{ inputs.args }}" ]]; then
+          echo "args=${{ inputs.args }}" >> $GITHUB_OUTPUT
+        else:
+          echo "args=" >> $GITHUB_OUTPUT
+        fi
       shell: bash
 
     - name: Run Terraform Init
       if: ${{ inputs.run-validator == 'true' }}
-      run: |
-        echo -e "\e[1;34m Initializing Terraform... \e[0m"
-        terraform init "${{ inputs.args }}"
+      run: terraform init ${{ steps.args.outputs.args }}
       shell: bash
       working-directory: ${{ inputs.working-directory }}
 
     - name: Run Terraform Validator
       if: ${{ inputs.run-validator == 'true' }}
-      run: |
-        echo -e "\e[1;34m Validating Terraform... \e[0m"
-        terraform validate
+      run: terraform validate
       shell: bash
       working-directory: ${{ inputs.working-directory }}
 
@@ -97,9 +92,7 @@ runs:
       # Integration Tests
     - name: Run Terraform Integration Tests
       if: ${{ inputs.run-apply == 'true' }}
-      run: |
-        echo -e "\e[1;34m Applying Terraform... \e[0m"
-        tflocal apply --auto-approve "${{ inputs.args }}"
+      run: tflocal apply --auto-approve ${{ steps.args.outputs.args }}
       shell: bash
       working-directory: ${{ inputs.working-directory }}
 
