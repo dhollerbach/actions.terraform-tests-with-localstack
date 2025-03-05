@@ -17,7 +17,7 @@ runs:
         BLUE="\033[34m"
         RESET="\033[0m"
 
-        echo 'logger() {
+        echo -e 'logger() {
           case "$1" in
             info)    COLOR=$BLUE; ICON="ℹ️";;
             success) COLOR=$GREEN; ICON="✅";;
