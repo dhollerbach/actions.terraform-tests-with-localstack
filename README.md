@@ -6,7 +6,7 @@ GitHub action that runs Terraform tests using LocalStack.
 
 | Name                    | Required     | Description                                                                                                                                                         |
 | ----------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `args`                  | **Optional** | Arguments to use when running `terraform init` and `terraform apply`. E.g. `--backend-config=my-config-file.conf --var-file=dev.tfvars -var MY_VARIABLE=some_value` |
+| `args`                  | **Optional** | Arguments to use when running `terraform init` and `terraform apply`. E.g. `--backend-config=my-config-file.conf --var-file=dev.tfvars -var MY_VARIABLE=some_value`. Defaults to `""`. |
 | `github-user`           | **Optional** | The GitHub user to associate with the personal access token. GitHub does not actually use this user so any value will work. Default is `github-user`.               |
 | `localstack-api-key`    | **Optional** | The LocalStack API key to use when setting up LocalStack Pro. Set **localstack-use-pro** to `true` if setting your api key.                                         |
 | `localstack-image-tag`  | **Optional** | The LocalStack image tag to use when setting up LocalStack. Defaults to `latest`.                                                                                   |
