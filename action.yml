@@ -40,18 +40,18 @@ runs:
         terraform_wrapper: "${{ inputs.terraform-wrapper }}"
 
     - name: Install Linter addon
-      if: ${{ inputs.run-linter == "true" }}
+      if: ${{ eq(inputs.run-linter, "true") }}
       run: curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
       shell: bash
 
     - name: Install Security Scanner addon
-      if: ${{ inputs.run-security-scanner == "true" }}
+      if: ${{ eq(inputs.run-security-scanner, "true") }}
       run: curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
       shell: bash
 
     # Unit Tests
     - name: Run Formatter
-      if: ${{ inputs.run-formatter == "true" }}
+      if: ${{ eq(inputs.run-formatter, "true") }}
       run: |
         logger info  "Running terraform fmt..."
         terraform fmt -recursive
@@ -60,7 +60,7 @@ runs:
       working-directory: ${{ inputs.working-directory }}
 
     - name: Run Linter
-      if: ${{ inputs.run-linter == "true" }}
+      if: ${{ eq(inputs.run-linter, "true") }}
       run: |
         logger info "Running tflint..."
         tflint --recursive
@@ -69,7 +69,7 @@ runs:
       working-directory: ${{ inputs.working-directory }}
 
     - name: Run Security Scanner
-      if: ${{ inputs.run-security-scanner == "true" }}
+      if: ${{ eq(inputs.run-security-scanner, "true") }}
       run: |
         logger info "Running tfsec..."
         tfsec
@@ -85,7 +85,7 @@ runs:
       shell: bash
 
     - name: Run Terraform Init
-      if: ${{ inputs.run-validator == "true" }}
+      if: ${{ eq(inputs.run-validator, "true") }}
       run: |
         logger info "Initializing Terraform..."
         terraform init "${{ inputs.args }}"
@@ -93,7 +93,7 @@ runs:
       working-directory: ${{ inputs.working-directory }}
 
     - name: Run Terraform Validator
-      if: ${{ inputs.run-validator == "true" }}
+      if: ${{ eq(inputs.run-validator, "true") }}
       run: |
         logger info "Validating Terraform..."
         terraform validate
@@ -102,7 +102,7 @@ runs:
 
     # LocalStack
     - name: Setup LocalStack
-      if: ${{ inputs.run-apply == "true" }}
+      if: ${{ eq(inputs.run-apply, "true") }}
       uses: localstack/setup-localstack@main
       with:
         image-tag: "${{ inputs.localstack-image-tag }}"
@@ -111,13 +111,13 @@ runs:
         LOCALSTACK_API_KEY: "${{ inputs.localstack-api-key }}"
 
     - name: Install tflocal
-      if: ${{ inputs.run-apply == "true" }}
+      if: ${{ eq(inputs.run-apply, "true") }}
       run: pip install terraform-local
       shell: bash
 
       # Integration Tests
     - name: Run Terraform Integration Tests
-      if: ${{ inputs.run-apply == "true" }}
+      if: ${{ eq(inputs.run-apply, "true") }}
       run: |
         logger info "Applying Terraform..."
         tflocal apply --auto-approve "${{ inputs.args }}"
